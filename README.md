@@ -1,100 +1,283 @@
-# 🚖 Uber-Ola Fare Estimator
+# 🚕 Uber/Ola Fare Estimator using Machine Learning & FastAPI
 
-A lightweight Python project for exploring and preparing ride fare data from Uber and Ola trips. This repository includes dataset inspection, data cleaning, and a simple preprocessing flow for fare estimation analysis.
+## 📌 Project Overview
 
----
+This project predicts Uber/Ola ride fares using Machine Learning. The model is trained on historical ride data and uses ride-related features such as passenger count, pickup time, and trip distance to estimate the fare amount.
 
-## 🌟 Project Overview
+The project includes:
 
-This repository demonstrates a minimal end-to-end workflow for working with taxi fare data:
-
-- `src/train.py` loads the dataset, inspects structure, and performs initial cleaning steps.
-- `src/EDA.py` conducts exploratory data analysis and reviews fare distributions.
-- `Data/uber.csv` is the source dataset containing ride information for fare estimation.
-
----
-
-## 📁 Repository Structure
-
-- `Data/uber.csv` — raw ride dataset used for analysis.
-- `src/train.py` — data loading and preprocessing script.
-- `src/EDA.py` — exploratory analysis and fare filtering.
-- `requirements.txt` — project dependencies.
+* Data Cleaning
+* Feature Engineering
+* Haversine Distance Calculation
+* Linear Regression Model
+* Model Evaluation
+* FastAPI REST API
+* Pydantic Validation
+* Swagger Documentation
 
 ---
 
-## 🚀 Getting Started
+## 🎯 Problem Statement
 
-1. Clone the repository:
+Ride-hailing platforms such as Uber and Ola determine fares based on multiple factors including trip distance, time, and ride details.
+
+The objective of this project is to build a Machine Learning model capable of estimating ride fares based on available trip information.
+
+---
+
+## 🛠️ Technologies Used
+
+* Python
+* Pandas
+* Scikit-Learn
+* FastAPI
+* Pydantic
+* Joblib
+* Uvicorn
+
+---
+
+## 📂 Project Structure
+
+```text
+Uber-Ola-Fare-Estimator/
+
+├── Data/
+│   ├── cleaned_uber.csv
+│   └── featured_uber.csv
+│
+├── Models/
+│   └── uber_fare_model.pkl
+│
+├── engine/
+│   └── main.py
+│
+├── data_cleaning.py
+├── feature_engineering.py
+├── train_model.py
+├── requirements.txt
+└── README.md
+```
+
+---
+
+## 📊 Data Preprocessing
+
+### Data Cleaning
+
+* Removed unnecessary columns:
+
+  * Unnamed: 0
+  * key
+
+* Removed null values using:
+
+```python
+dropna()
+```
+
+* Removed negative fare values.
+
+---
+
+### Feature Engineering
+
+Extracted the following datetime features:
+
+* Hour
+* Day
+* Month
+* Weekday
+
+Generated trip distance using the Haversine Formula.
+
+---
+
+## 🌍 Haversine Formula
+
+The Haversine Formula calculates the great-circle distance between two points on Earth using latitude and longitude coordinates.
+
+Generated Feature:
+
+```text
+distance
+```
+
+Distance is measured in kilometers.
+
+---
+
+## 🚨 Outlier Removal
+
+Removed unrealistic trips:
+
+```python
+df = df[df["distance"] > 0]
+df = df[df["distance"] <= 100]
+```
+
+This improved model performance significantly by eliminating extreme distance values.
+
+---
+
+## 🤖 Machine Learning Model
+
+### Algorithm
+
+Linear Regression
+
+### Input Features
+
+* passenger_count
+* hour
+* day
+* month
+* weekday
+* distance
+
+### Target Variable
+
+```text
+fare_amount
+```
+
+---
+
+## 📈 Model Performance
+
+| Metric   | Value |
+| -------- | ----- |
+| MAE      | 2.40  |
+| RMSE     | 5.03  |
+| R² Score | 0.73  |
+
+### Interpretation
+
+* Average prediction error is approximately ₹2.40.
+* Typical prediction error is approximately ₹5.03.
+* The model explains approximately 73% of fare variation.
+
+---
+
+## 💾 Model Serialization
+
+The trained model is saved using Joblib.
+
+```python
+joblib.dump(model, "Models/uber_fare_model.pkl")
+```
+
+Saved Model:
+
+```text
+Models/uber_fare_model.pkl
+```
+
+---
+
+## 🚀 FastAPI Integration
+
+The trained model is exposed through a REST API built using FastAPI.
+
+### Run the API
 
 ```bash
-git clone https://github.com/your-username/Uber-Ola-Fare-Estimator.git
-cd Uber-Ola-Fare-Estimator
+python -m uvicorn engine.main:app --reload
 ```
 
-2. Create and activate a virtual environment:
+---
 
-```powershell
-python -m venv .env
-.\.env\Scripts\Activate.ps1
+## 📚 API Documentation
+
+FastAPI automatically generates Swagger UI documentation.
+
+Open:
+
+```text
+http://127.0.0.1:8000/docs
 ```
 
-3. Install dependencies:
+---
 
-```bash
-pip install -r requirements.txt
-pip install pandas
+## API Endpoints
+
+### Home Endpoint
+
+```http
+GET /
 ```
 
-> Note: `requirements.txt` currently includes plotting-related packages. `pandas` is required for dataset loading and analysis.
+Response:
 
----
-
-## ▶️ How to Run
-
-Run the preprocessing and inspection scripts from the project root:
-
-```bash
-python src\train.py
-python src\EDA.py
+```json
+{
+  "message": "Uber Fare Estimator API is Running 🚕"
+}
 ```
 
-- `src/train.py` prints dataset preview, column metadata, and cleaned shape.
-- `src/EDA.py` filters invalid fares and provides a simple exploratory output.
+---
+
+### Health Check
+
+```http
+GET /health
+```
+
+Response:
+
+```json
+{
+  "status": "healthy"
+}
+```
 
 ---
 
-## 🧠 What It Does
+### Predict Fare
 
-- Loads the Uber/Ola CSV dataset.
-- Displays the first rows and dataset information.
-- Detects missing and duplicate values.
-- Drops unnecessary columns: `Unnamed: 0`, `key`.
-- Removes rows with missing values.
-- Filters out non-positive fares in the EDA flow.
+```http
+POST /predict
+```
+
+Request:
+
+```json
+{
+  "passenger_count": 2,
+  "hour": 18,
+  "day": 10,
+  "month": 6,
+  "weekday": 2,
+  "distance": 5
+}
+```
+
+Response:
+
+```json
+{
+  "predicted_fare": 15.01
+}
+```
 
 ---
 
-## 💡 Improvements
+## 🔍 Future Improvements
 
-Future enhancements could include:
-
-- building a machine learning fare prediction model
-- adding visualization of pickup/dropoff distributions
-- validating geographic coordinates and trip distance
-- converting the explorer into a notebook or dashboard
-
----
-
-## 📌 Notes
-
-- Ensure `Data/uber.csv` is present before running scripts.
-- This project is ideal for exploratory data preparation and as a foundation for fare prediction modeling.
+* Random Forest Regressor
+* XGBoost Regressor
+* Hyperparameter Tuning
+* Model Deployment on Cloud
+* Frontend Integration
+* Real-Time Fare Prediction
 
 ---
 
-## 📜 License & Credit
+## 👨‍💻 Author
 
-This project is licensed under the Apache License 2.0. By using or sharing this repository, please give credit to the original programmer.
+Krishna
 
-If you reuse this code or build upon it, include a note that credits the original author of the repository.
+B.Tech Student | Frontend Developer | Machine Learning Enthusiast
+
+GitHub: Add your GitHub profile link here.
+YouTube: CodeUdaan
