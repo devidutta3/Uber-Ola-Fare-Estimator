@@ -2,10 +2,16 @@ import pandas as pd
 import math
 
 
+# =====================================
+# Load Dataset
+# =====================================
 def load_dataset(path):
     return pd.read_csv(path)
 
 
+# =====================================
+# Convert Datetime
+# =====================================
 def convert_date_time(df):
     df["pickup_datetime"] = pd.to_datetime(
         df["pickup_datetime"]
@@ -14,6 +20,9 @@ def convert_date_time(df):
     return df
 
 
+# =====================================
+# Extract Datetime Features
+# =====================================
 def extract_datetime_features(df):
     df["hour"] = df["pickup_datetime"].dt.hour
     df["day"] = df["pickup_datetime"].dt.day
@@ -23,13 +32,16 @@ def extract_datetime_features(df):
     return df
 
 
+# =====================================
+# Haversine Distance Formula
+# =====================================
 def haversine_distance(
     pickup_lat,
     pickup_lon,
     dropoff_lat,
     dropoff_lon
 ):
-    R = 6371
+    R = 6371  # Earth Radius in KM
 
     pickup_lat = math.radians(pickup_lat)
     pickup_lon = math.radians(pickup_lon)
@@ -55,6 +67,9 @@ def haversine_distance(
     return R * c
 
 
+# =====================================
+# Calculate Distance
+# =====================================
 def calculate_distance(df):
     df["distance"] = df.apply(
         lambda row: haversine_distance(
@@ -69,27 +84,93 @@ def calculate_distance(df):
     return df
 
 
+# =====================================
+# Remove Distance Outliers
+# =====================================
+def remove_distance_outliers(df):
+
+    print("\nBefore Outlier Removal:")
+    print(df.shape)
+
+    df = df[df["distance"] > 0]
+    df = df[df["distance"] <= 100]
+
+    print("\nAfter Outlier Removal:")
+    print(df.shape)
+
+    return df
+
+
+# =====================================
+# Save Dataset
+# =====================================
 def save_dataset(df, path):
     df.to_csv(path, index=False)
 
 
-# Load Dataset
-df = load_dataset(r"Data\cleaned_uber.csv")
+# =====================================
+# Feature Selection
+# =====================================
+def select_features(df):
 
-# Convert Datetime
-df = convert_date_time(df)
+    X = df[
+        [
+            "passenger_count",
+            "hour",
+            "day",
+            "month",
+            "weekday",
+            "distance"
+        ]
+    ]
 
-# Extract Datetime Features
-df = extract_datetime_features(df)
+    y = df["fare_amount"]
 
-# Calculate Distance
-df = calculate_distance(df)
+    return X, y
 
-# Save Engineered Dataset
-save_dataset(df, r"Data\featured_uber.csv")
 
-# Preview
-print(df.head())
+# =====================================
+# Main Function
+# =====================================
+def main():
 
-print("\nNew Features:")
-print(df[["hour", "day", "month", "weekday", "distance"]].head())
+    # Load Dataset
+    df = load_dataset(r"Data\cleaned_uber.csv")
+
+    # Convert Datetime
+    df = convert_date_time(df)
+
+    # Extract Datetime Features
+    df = extract_datetime_features(df)
+
+    # Calculate Distance
+    df = calculate_distance(df)
+
+    # Remove Distance Outliers
+    df = remove_distance_outliers(df)
+
+    # Distance Statistics
+    print("\nDistance Statistics:")
+    print(df["distance"].describe())
+
+    # Save Featured Dataset
+    save_dataset(
+        df,
+        r"Data\featured_uber.csv"
+    )
+
+    # Feature Selection
+    X, y = select_features(df)
+
+    print("\nFeatures (X):")
+    print(X.head())
+
+    print("\nTarget (y):")
+    print(y.head())
+
+    print("\nFinal Dataset Shape:")
+    print(df.shape)
+
+
+if __name__ == "__main__":
+    main()
