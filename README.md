@@ -279,5 +279,5 @@ Krishna
 
 B.Tech Student | Frontend Developer | Machine Learning Enthusiast
 
-GitHub: Add your GitHub profile link here.
+GitHub: <a src="https://github.com/Devidutta3">Profile </a> <br>
 YouTube: CodeUdaan
